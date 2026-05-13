@@ -21,7 +21,7 @@ async function createWindow(): Promise<void> {
     autoHideMenuBar: true,
     backgroundColor: '#fafaf9',
     webPreferences: {
-      preload: path.join(__dirname, '../preload/index.mjs'),
+      preload: path.join(__dirname, '../preload/index.js'),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
