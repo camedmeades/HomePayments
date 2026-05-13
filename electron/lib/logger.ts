@@ -1,4 +1,4 @@
-import log from 'electron-log/main';
+import log from 'electron-log/main.js';
 import path from 'node:path';
 import { paths } from './paths.js';
 
