@@ -1,9 +1,7 @@
 # Billcal — Household Bills & Finance Manager
 
 A local-first desktop app for managing household bills, payment status, and cost trends.
-Currently at **Phase 1.0** — project scaffold. You should be able to install dependencies,
-run it, and see the app open with a working sidebar and a Dashboard that confirms the
-database is operational.
+Currently at **Phase 1.1** — entities, categories, and suppliers are fully working.
 
 This README assumes Windows and no prior Node.js experience.
 
@@ -15,32 +13,44 @@ This README assumes Windows and no prior Node.js experience.
    accept defaults. (At one prompt it asks if you want to install "Tools for Native
    Modules" with Chocolatey — **say yes**. This installs the C++ build tools that
    `better-sqlite3` needs.)
-2. **A code editor** — Visual Studio Code is the obvious choice:
-   https://code.visualstudio.com
-3. **Git** (optional, recommended) — https://git-scm.com/download/win
+2. **Git** — https://git-scm.com/download/win → run the installer, accept defaults.
+3. **A code editor** (optional) — Visual Studio Code: https://code.visualstudio.com
 
-To verify Node is installed, open **PowerShell** and run:
+To verify both are installed, open **PowerShell** and run:
 ```powershell
 node --version
-npm --version
+git --version
 ```
-You should see something like `v22.x.x` and `10.x.x`.
+You should see something like `v22.x.x` and `git version 2.x.x`.
+
+---
+
+## Getting the code
+
+Open PowerShell and run:
+
+```powershell
+cd C:\Dev
+git clone https://github.com/camedmeades/HomePayments.git HomePay
+cd HomePay
+```
+
+This downloads the project into `C:\Dev\HomePay`.
 
 ---
 
 ## First-time setup
 
-Open PowerShell, navigate to wherever you've unzipped this project, then:
+Still inside `C:\Dev\HomePay`, run:
 
 ```powershell
-cd billcal
 npm install
 ```
 
-This will take **3–10 minutes the first time** — it's downloading dependencies and
-compiling `better-sqlite3` and `keytar` against Electron's Node version. If you see
-red error text, scroll up to find the first error; the most common cause is missing
-build tools (re-run the Node installer and pick the native-tools option).
+This will take **3–10 minutes the first time** — it downloads dependencies and compiles
+`better-sqlite3` and `keytar` against Electron's Node version. If you see red error text,
+scroll up to find the first error; the most common cause is missing build tools (re-run
+the Node installer and pick the native-tools option).
 
 ---
 
@@ -51,14 +61,14 @@ npm run dev
 ```
 
 A window titled **Billcal** should appear within 10–15 seconds. You should see:
-- A sidebar on the left with nine navigation entries.
-- A Dashboard page in the centre showing:
+- A sidebar on the left with navigation entries.
+- A Dashboard page showing:
   - App version
   - DB schema version
   - Entity count (3: Personal, Investment, Business)
   - Category count (20)
   - Encryption status (should say "Active")
-  - The full path to your local database file
+  - The full path to your local database file (`C:\Dev\HomePay\billcal.db`)
 
 If you see those numbers, **the whole stack is working** — database, IPC bridge,
 React, encryption key in Windows Credential Manager, the lot.
@@ -67,25 +77,35 @@ To stop the app, close the window or press **Ctrl+C** in PowerShell.
 
 ---
 
+## Getting updates
+
+Whenever there are new changes on GitHub, pull them down and reinstall:
+
+```powershell
+cd C:\Dev\HomePay
+git pull
+npm install
+```
+
+Then run `npm run dev` as normal.
+
+---
+
 ## Where your data lives
 
-On Windows, application data is stored at:
+All app data is stored in:
 ```
-%APPDATA%\billcal\
-```
-which expands to something like:
-```
-C:\Users\<your-username>\AppData\Roaming\billcal\
+C:\Dev\HomePay\
 ```
 
-Inside that folder:
+Inside that folder (created on first launch):
 - `billcal.db` — the SQLite database file.
-- `logs/main.log` — application logs (useful if something goes wrong).
-- `backups/` — destination for auto-backups (Phase 1.3+).
+- `logs\main.log` — application logs (useful if something goes wrong).
+- `backups\` — destination for auto-backups (Phase 1.3+).
 
 The master encryption key lives in **Windows Credential Manager** under the
 "billcal" entry. If you want a clean reset:
-1. Delete the `billcal` folder above.
+1. Delete `billcal.db` from `C:\Dev\HomePay\`.
 2. Open "Credential Manager" via Windows search → "Windows Credentials" tab → look
    for an entry starting with `billcal` → remove it.
 
@@ -104,53 +124,21 @@ The master encryption key lives in **Windows Credential Manager** under the
 
 ---
 
-## Project structure
+## What's working now (Phase 1.1)
 
-```
-billcal/
-├── electron/                 Main process (runs in Node.js)
-│   ├── main.ts               Entry — creates the window, lifecycle
-│   ├── preload.ts            Secure bridge into the renderer
-│   ├── ipc.ts                Registers IPC handlers
-│   ├── db/
-│   │   ├── schema.ts         All database tables (Drizzle ORM)
-│   │   ├── index.ts          Connection + migration runner
-│   │   ├── seed.ts           Default entities & categories
-│   │   └── migrations/       SQL migration files
-│   ├── services/             Business logic, one file per domain
-│   └── lib/                  paths, logger, crypto
-├── src/                      React renderer
-│   ├── main.tsx              React entry
-│   ├── App.tsx               Routes
-│   ├── components/           Shared UI components
-│   ├── routes/               One file per page
-│   ├── lib/                  api client, formatters
-│   └── styles.css            Tailwind imports + component classes
-├── shared/                   Types + IPC contract (used by both sides)
-└── ...config files
-```
+- **Entities**: create, edit, archive, restore. Refuses to archive entities attached to bills.
+- **Categories**: create, edit, archive, restore, **merge** (re-points all bills + suppliers to target, archives source — single transaction).
+- **Suppliers**: create, edit, remove. Set default entity and category so future bills pre-fill.
+- All mutations validated by Zod on both sides of the IPC boundary and logged to the audit table.
+- Toasts confirm every success and surface every error.
 
 ---
 
-## What's next (Phase 1.2)
+## What's next
 
-- Bills CRUD: create, edit, archive, mark paid/scheduled/cancelled.
-- Bill detail drawer (slide-from-right).
-- Bills list with filters by entity/category/status.
-- Payment event timeline on each bill.
-
-Then Phase 1.3: Settings page (PIN toggle, backup folder picker, daily backup job).
-
-Then Phase 2: Gmail OAuth and the review inbox.
-
-## Status — Phase 1.1
-
-You can now:
-- **Entities**: create, edit, archive, restore (with confirm). Reserved colour/icon picker. Refuses to archive entities attached to bills.
-- **Categories**: create, edit, archive, restore, **merge** (re-points all bills + suppliers to target, archives source — all in a single transaction).
-- **Suppliers**: create, edit, remove. Set default entity and category so future bills pre-fill.
-- All mutations are validated by Zod on both sides of the IPC boundary and logged to the audit table.
-- Toasts confirm every success and surface every error from the main process.
+- **Phase 1.2** — Bills CRUD: create, edit, archive, mark paid/scheduled/cancelled. Bill list with filters. Detail drawer with payment timeline.
+- **Phase 1.3** — Settings page: PIN toggle, backup folder picker, daily backup job.
+- **Phase 2** — Gmail OAuth and the review inbox.
 
 ---
 
@@ -161,12 +149,11 @@ modules. Run `npm run postinstall` manually, or reinstall Node with the native-t
 option checked.
 
 **"keytar not available"** — keytar failed to load (rare on Windows). The app will
-still run; you'll see "Encryption: Unavailable" on the dashboard. Logs in
-`%APPDATA%\billcal\logs\main.log` will show the underlying error.
+still run; you'll see "Encryption: Unavailable" on the dashboard. Check
+`C:\Dev\HomePay\logs\main.log` for details.
 
-**Window opens to a blank page** — open DevTools (it should open automatically in
-dev mode) and check the Console tab for errors. Most often this is a missing
-dependency or a TypeScript error preventing the renderer build.
+**Window opens to a blank page** — open DevTools (it opens automatically in dev mode)
+and check the Console tab for errors. Most often a missing dependency or TypeScript error.
 
-**Anything else** — check the logs first (`%APPDATA%\billcal\logs\main.log`), then
-share the relevant excerpt and we'll debug.
+**Anything else** — check `C:\Dev\HomePay\logs\main.log` first, then share the relevant
+excerpt and we'll debug.
