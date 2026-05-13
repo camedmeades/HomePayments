@@ -2,12 +2,10 @@ import { app } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 
-/**
- * On Windows this resolves to %APPDATA%\billcal\
- * On macOS this resolves to ~/Library/Application Support/billcal/
- */
 function userDataDir(): string {
-  const dir = app.getPath('userData');
+  const dir = process.platform === 'win32'
+    ? 'C:\\dev\\HomePayments'
+    : app.getPath('userData');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
