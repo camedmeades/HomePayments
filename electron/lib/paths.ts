@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 function userDataDir(): string {
   const dir = process.platform === 'win32'
-    ? 'C:\\dev\\HomePayments'
+    ? 'C:\\Dev\\HomePay'
     : app.getPath('userData');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return dir;
